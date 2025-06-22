@@ -1,0 +1,5 @@
+openai
+pymupdf
+python-dotenv
+azure-search-documents
+pdf2image
