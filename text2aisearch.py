@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from openai import AzureOpenAI
 from azure.search.documents import SearchClient
 from azure.core.credentials import AzureKeyCredential
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Load environment variables
 load_dotenv()
@@ -23,6 +24,8 @@ SEARCH_KEY = os.getenv("AZURE_SEARCH_KEY")
 SEARCH_INDEX_NAME = os.getenv("AZURE_SEARCH_INDEX_NAME")
 
 BATCH_SIZE = 10
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 100
 
 def clean_text(text: str) -> str:
     if not isinstance(text, str):
@@ -65,6 +68,21 @@ def get_all_txt_files(root_dir):
                 txt_files.append(os.path.join(dirpath, filename))
     return txt_files
 
+def split_by_recursive_chunking(text, chunk_size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
+    """
+    Split text using LangChain's RecursiveCharacterTextSplitter.
+    This splits by paragraphs first, then sentences, then words.
+    """
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=overlap,
+        length_function=len,
+        separators=["\n\n", "\n", ". ", " ", ""]
+    )
+    
+    chunks = text_splitter.split_text(text)
+    return chunks
+
 def split_by_page(text):
     # Split on --- Page N --- markers, keep the marker with the chunk
     pattern = r'(--- Page (\d+) ---)'
@@ -100,7 +118,7 @@ def main():
         print(f"Processing: {txt_path}")  # Log which document is being processed
         with open(txt_path, 'r', encoding='utf-8') as f:
             text = f.read()
-        chunks, page_numbers = split_by_page(text)
+        chunks, page_numbers = split_by_recursive_chunking(text)
         document_id = os.path.basename(txt_path)
         sanitized_doc_id = sanitize_document_id(document_id)
         source_filename = document_id

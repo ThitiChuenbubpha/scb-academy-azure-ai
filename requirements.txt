@@ -1,5 +1,11 @@
+streamlit
+azure-identity
+azure-search-documents
 openai
 pymupdf
 python-dotenv
-azure-search-documents
-pdf2image
+langchain
+langchain-text-splitters
+Pillow
+numpy
+pandas
